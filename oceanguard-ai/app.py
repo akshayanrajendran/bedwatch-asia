@@ -50,8 +50,10 @@ def main():
     st.title("OceanGuard AI")
     st.caption("Fishing Pressure Forecast & Hotspot Detection · SDG 14 — Life Below Water")
     st.info(
-        "Predicts **future apparent fishing pressure** relative to history. "
-        "Does **not** claim illegal fishing, overfishing, or ecological damage."
+        "Predicts **future apparent fishing pressure** relative to history for the "
+        "**Gulf of Thailand / South China Sea** (same BedWatch geography). "
+        "Does **not** claim illegal fishing, overfishing, or ecological damage. "
+        "When only annual GFW cells are available, hours are seasonally spread to weeks for the pipeline."
     )
 
     preds, comparison, meta, cfg = load_predictions()

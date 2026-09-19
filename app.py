@@ -433,6 +433,38 @@ def main():
     top = current.nlargest(10, "risk")[["lat", "lon", "risk", "driver", "habitat", "depth"]]
     st.dataframe(top, use_container_width=True, hide_index=True)
 
+    st.subheader("Next-year trawl-hours forecast (ML)")
+    st.caption(
+        "Gradient boosting on annual GFW cell history (lags + location). "
+        "Predicts the year after the latest observed year — not a weekly model."
+    )
+    try:
+        from model.next_year import forecast_next_year
+
+        effort_years = all_df.groupby(["year", "lat", "lon"], as_index=False)["fishing_hours"].sum()
+        forecast, m = forecast_next_year(effort_years)
+        a1, a2, a3, a4 = st.columns(4)
+        a1.metric("Forecast year", m.get("forecast_year", "—"))
+        a2.metric("Cells", f"{m.get('n_forecast_cells', 0):,}")
+        a3.metric("Test MAE", f"{m.get('mae', 0):.1f} h")
+        a4.metric(
+            "vs lag-1 naive",
+            "beats" if m.get("beats_naive") else "does not beat",
+            f"naive {m.get('naive_mae', 0):.1f}",
+        )
+        fmap = forecast.copy()
+        fmap["risk"] = 100.0 * (
+            fmap["predicted_hours"] / max(float(fmap["predicted_hours"].max()), 1e-6)
+        )
+        st.pydeck_chart(deck_map(fmap, reg, radius=56), use_container_width=True)
+        rising = forecast.nlargest(10, "pct_change")[
+            ["lat", "lon", "hours_last_year", "predicted_hours", "pct_change"]
+        ]
+        st.markdown("**Top intensifying cells (% change vs last year)**")
+        st.dataframe(rising, use_container_width=True, hide_index=True)
+    except Exception as exc:
+        st.info(f"Next-year model unavailable: {exc}")
+
     with st.expander("What this is"):
         st.markdown(
             """
@@ -441,7 +473,7 @@ def main():
   whether a closure leaks effort next door, versus fixing gear, depth, and season.
 - **Index:** pressure (hours, min-max over all years) x vulnerability x (1 - recovery), scaled 0-100.
 - **Prediction:** 10-year RBS uses Hiddink-style depletion and recovery. Seagrass depletion is
-  much higher than mud fauna (uprooting).
+  much higher than mud fauna (uprooting). **Next-year ML** forecasts trawl hours from annual GFW lags.
 - Focus waterbodies: Gulf of Thailand and the South China Sea (including Thai waters).
 - Drop `data/gfw_trawl_effort.csv` from `python3 model/fetch_gfw.py` (needs `GFW_API_TOKEN`)
   and optional `data/gebco.nc` to replace synthetic effort and depth.

@@ -98,8 +98,18 @@ def generate_demo_effort(cfg: dict) -> pd.DataFrame:
     lats = np.arange(r["lat_min"], r["lat_max"], res) + res / 2
     lons = np.arange(r["lon_min"], r["lon_max"], res) + res / 2
     weeks = pd.date_range(cfg["time"]["start_date"], cfg["time"]["end_date"], freq="W-MON")
-    # Coastal hotspots in Gulf of St. Lawrence
-    hotspots = np.array([[48.5, -64.0], [49.2, -66.0], [47.8, -61.5], [50.0, -63.5], [46.5, -62.0]])
+    # Coastal / shelf hotspots — Gulf of Thailand + western SCS
+    hotspots = np.array(
+        [
+            [8.4, 100.2],
+            [12.0, 100.8],
+            [10.2, 100.4],
+            [9.5, 106.4],
+            [16.0, 108.4],
+            [20.6, 107.3],
+            [10.5, 114.0],
+        ]
+    )
     rows = []
     for w in weeks:
         for lat in lats:
@@ -118,12 +128,66 @@ def generate_demo_effort(cfg: dict) -> pd.DataFrame:
                         "lon": float(lon),
                         "fishing_hours": float(hours),
                         "geartype": "trawlers" if rng.random() > 0.4 else "other_fishing",
-                        "flag": "CAN",
+                        "flag": "THA",
                     }
                 )
     df = pd.DataFrame(rows)
     df.attrs["source"] = "DEMO"
     return df
+
+
+def snap_to_cfg_grid(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    r = cfg["region"]
+    res = cfg["grid"]["resolution_deg"]
+    out = df.copy()
+    out["lat"] = (
+        r["lat_min"]
+        + np.floor((out["lat"].to_numpy(dtype=float) - r["lat_min"]) / res) * res
+        + res / 2.0
+    )
+    out["lon"] = (
+        r["lon_min"]
+        + np.floor((out["lon"].to_numpy(dtype=float) - r["lon_min"]) / res) * res
+        + res / 2.0
+    )
+    out["date"] = pd.to_datetime(out["date"]).dt.to_period("Y").dt.start_time
+    return out.groupby(["date", "lat", "lon"], as_index=False)["fishing_hours"].sum()
+
+
+def expand_annual_to_weekly(df: pd.DataFrame) -> pd.DataFrame:
+    """Spread annual GFW cell totals across weeks with a SE Asia seasonal curve.
+
+    Honest for hackathon screening when only YEARLY 4Wings reports are available.
+    Prefer MONTHLY/DAILY GFW fetches for true week-ahead ops.
+    """
+    if df.empty:
+        return df
+    dates = pd.to_datetime(df["date"])
+    if dates.dt.to_period("W").nunique() > max(12, int(dates.dt.year.nunique()) * 4):
+        return df
+
+    rng = np.random.default_rng(7)
+    pieces = []
+    for year, g in df.groupby(dates.dt.year):
+        weeks = pd.date_range(f"{int(year)}-01-01", f"{int(year)}-12-28", freq="W-MON")
+        doy = weeks.dayofyear.to_numpy(dtype=float)
+        w = 1.0 + 0.35 * np.sin(2 * np.pi * doy / 365.25 - 0.6)
+        noise = rng.uniform(0.85, 1.15, size=len(weeks))
+        w = (w * noise)
+        w = w / w.sum()
+        # Cross join cells × weeks
+        cells = g[["lat", "lon", "fishing_hours"]].to_numpy()
+        for i, share in enumerate(w):
+            block = pd.DataFrame(
+                {
+                    "date": weeks[i],
+                    "lat": cells[:, 0],
+                    "lon": cells[:, 1],
+                    "fishing_hours": cells[:, 2] * float(share),
+                }
+            )
+            pieces.append(block)
+    return pd.concat(pieces, ignore_index=True)
 
 
 def load_effort(cfg: Optional[dict] = None, allow_demo: bool = True) -> Tuple[pd.DataFrame, str]:
@@ -132,22 +196,36 @@ def load_effort(cfg: Optional[dict] = None, allow_demo: bool = True) -> Tuple[pd
     files = _find_raw_files(raw_dir)
     demo_path = raw_dir / "demo_gfw_effort.csv"
 
-    if files and "demo" not in files[0].name.lower():
-        frames = []
+    # Prefer BedWatch Asia GFW CSV at repo root (same Thailand/SCS fetch).
+    bedwatch_rel = cfg["paths"].get("bedwatch_gfw")
+    bedwatch_path = (ROOT / bedwatch_rel).resolve() if bedwatch_rel else None
+
+    frames = []
+    source = None
+    if bedwatch_path and bedwatch_path.is_file():
+        frames.append(_normalize_gfw(pd.read_csv(bedwatch_path)))
+        source = "GFW data (BedWatch Asia)"
+    elif files and "demo" not in files[0].name.lower():
         for path in files:
             if "demo" in path.name.lower():
                 continue
-            part = pd.read_csv(path)
-            frames.append(_normalize_gfw(part))
-        if frames:
-            df = pd.concat(frames, ignore_index=True)
-            df = quality_filter(df, cfg)
-            return df, "GFW data"
+            frames.append(_normalize_gfw(pd.read_csv(path)))
+        source = "GFW data"
+
+    if frames:
+        df = pd.concat(frames, ignore_index=True)
+        df = quality_filter(df, cfg)
+        df = snap_to_cfg_grid(df, cfg)
+        df = expand_annual_to_weekly(df)
+        return df, source or "GFW data"
 
     if allow_demo:
         if demo_path.exists():
             df = _normalize_gfw(pd.read_csv(demo_path))
             df = quality_filter(df, cfg)
+            # Drop Canada-shaped demo if outside Asia bbox
+            if len(df) == 0:
+                df = generate_demo_effort(cfg)
         else:
             df = generate_demo_effort(cfg)
             demo_path.parent.mkdir(parents=True, exist_ok=True)

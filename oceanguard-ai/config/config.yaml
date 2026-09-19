@@ -1,27 +1,23 @@
 # OceanGuard AI configuration
-# Geographic scope: Atlantic Canada / Gulf of St. Lawrence (configurable for later expansion)
+# Same geography as BedWatch Asia (Gulf of Thailand / South China Sea shelf)
 
 region:
-  name: "Gulf of St. Lawrence / Atlantic Canada"
-  lat_min: 45.0
-  lat_max: 52.0
-  lon_min: -67.0
-  lon_max: -55.0
-  # Narrowed from prompt bbox (40–55, -70–-50) to keep MVP tractable at 0.5°.
+  name: "Gulf of Thailand / South China Sea"
+  lat_min: 5.0
+  lat_max: 23.0
+  lon_min: 99.0
+  lon_max: 121.0
 
 grid:
   resolution_deg: 0.5
 
 time:
-  # Demo / training window (ISO dates)
-  start_date: "2020-01-01"
-  end_date: "2024-12-31"
+  start_date: "2018-01-01"
+  end_date: "2023-12-31"
 
 splits:
-  # Chronological; adjust automatically if data range differs
-  train_end: "2022-12-31"
-  valid_end: "2023-12-31"
-  # test = everything after valid_end
+  train_end: "2021-12-31"
+  valid_end: "2022-12-31"
 
 risk:
   low_max_percentile: 70
@@ -30,7 +26,7 @@ risk:
 
 models:
   random_state: 42
-  n_estimators: 100
+  n_estimators: 80
   max_depth: 8
 
 paths:
@@ -43,3 +39,5 @@ paths:
   predictions_csv: "data/predictions/latest_predictions.csv"
   processed_weekly: "data/processed/weekly_grid.csv"
   features_parquet: "data/processed/features.parquet"
+  # BedWatch Asia GFW file (repo root), preferred over DEMO
+  bedwatch_gfw: "../data/gfw_trawl_effort.csv"

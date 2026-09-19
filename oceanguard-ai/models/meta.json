@@ -1,0 +1,21 @@
+{
+  "data_source": "GFW data (BedWatch Asia)",
+  "best_model": "RandomForest",
+  "best_mae": 29.35858516689723,
+  "naive_lag1_mae": 34.97940646669569,
+  "beats_naive": true,
+  "feature_importance": {
+    "fishing_hours_lag_1": 0.8230581661209593,
+    "fishing_hours_rolling_max_4": 0.13265258678128922,
+    "fishing_hours_rolling_mean_4": 0.029006725380992214,
+    "weekofyear": 0.00355560206364823,
+    "fishing_hours_lag_2": 0.003544237565918095,
+    "cos_week": 0.0016563924616061934,
+    "fishing_hours_rolling_std_4": 0.0011753447525909254,
+    "delta_1": 0.0010748211343441416,
+    "sin_week": 0.0008480678090065703,
+    "fishing_hours_rolling_mean_8": 0.000759364356520059,
+    "fishing_hours_lag_3": 0.0006825072643327135,
+    "month": 0.0005666699808094858
+  }
+}

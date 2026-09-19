@@ -72,9 +72,12 @@ Seagrass-tagged cells are treated as much more sensitive than open mud or sand.
     st.subheader("OceanGuard in one paragraph")
     st.markdown(
         """
-OceanGuard trains models on weekly fishing hours to forecast **next week’s apparent effort**,
-then scores cells LOW / MEDIUM / HIGH versus that cell’s seasonal historical median.
-Open **OceanGuard AI** in the sidebar; train there if artifacts are missing.
+OceanGuard uses the **same Thailand / South China Sea** GFW trawler file as BedWatch.
+It expands annual cells into a weekly series (seasonal weights) so the next-week pressure
+model can run, then scores LOW / MEDIUM / HIGH vs each cell’s seasonal baseline.
+Open **OceanGuard AI** in the sidebar; click **Train** if artifacts are missing.
+
+BedWatch also has a **next-year** hours forecast (gradient boosting on annual lags) on the home page.
         """
     )
 

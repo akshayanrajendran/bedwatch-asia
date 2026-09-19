@@ -83,7 +83,13 @@ Optional data files (drop them here; the app falls back to synthetic data if mis
 - `data/gfw_trawl_effort.csv` - columns `date, lat, lon, fishing_hours` (already filtered to trawlers)
 - `data/gebco.nc` - GEBCO bathymetry NetCDF, regridded to the 0.25 degree grid
 
-## Publish (Streamlit Community Cloud)
+## OceanGuard AI (same geography)
+
+Sidebar page **OceanGuard AI** forecasts next-week fishing pressure for the
+**Gulf of Thailand / South China Sea**, using `data/gfw_trawl_effort.csv` when present
+(annual cells are seasonally expanded to weeks). BedWatch home also shows a **next-year**
+hours forecast from annual lags (`model/next_year.py`).
+
 
 1. Push this repo to GitHub (public).
 2. Open [share.streamlit.io](https://share.streamlit.io), sign in with GitHub, and create an app:

@@ -4,3 +4,6 @@ numpy
 pydeck
 xarray
 netCDF4
+scikit-learn
+pyyaml
+joblib
