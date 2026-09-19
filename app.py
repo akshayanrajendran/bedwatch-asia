@@ -330,7 +330,8 @@ def main():
     st.caption(
         "SDG 14 screening tool for Thailand and the South China Sea: where inappropriate "
         "bottom trawling degrades fishing beds, and whether a closure or a gear reform "
-        "actually lowers risk after boats move. Optional GFW trawler hours via GFW_API_TOKEN."
+        "actually lowers risk after boats move. Optional GFW trawler hours via GFW_API_TOKEN. "
+        "Setup walkthrough: sidebar → **Setup & docs**."
     )
     region_id = st.sidebar.selectbox(
         "Waterbody",
