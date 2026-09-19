@@ -164,8 +164,22 @@ def fetch_year(token: str, year: int) -> bytes:
             "User-Agent": "bedwatch-asia/1.0 (hackathon)",
         },
     )
-    with urllib.request.urlopen(req, timeout=180) as resp:
-        return resp.read()
+    # One concurrent report per token — retry 429 until the prior report clears.
+    delay = 5.0
+    for attempt in range(12):
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            if exc.code == 429 and attempt < 11:
+                print(f"  rate-limited; sleep {delay:.0f}s…", flush=True)
+                time.sleep(delay)
+                delay = min(delay * 1.5, 60.0)
+                continue
+            print(f"GFW HTTP {exc.code}: {body[:800]}", file=sys.stderr)
+            raise SystemExit(1) from exc
+    raise SystemExit("GFW still rate-limited after retries")
 
 
 def main() -> None:
@@ -180,16 +194,11 @@ def main() -> None:
     all_rows = []
     for year in range(DATE_START_YEAR, DATE_END_YEAR + 1):
         print(f"fetching {year}…", flush=True)
-        try:
-            raw = fetch_year(token, year)
-        except urllib.error.HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="replace")
-            print(f"GFW HTTP {exc.code}: {body[:800]}", file=sys.stderr)
-            sys.exit(1)
+        raw = fetch_year(token, year)
         year_rows = to_csv_rows(parse_table(raw))
         print(f"  {len(year_rows)} cells from raw", flush=True)
         all_rows.extend(year_rows)
-        time.sleep(2.0)  # avoid concurrent-report 429
+        time.sleep(5.0)  # let gateway clear concurrent-report lock
     if not all_rows:
         print("GFW returned no trawler cells.", file=sys.stderr)
         sys.exit(1)
