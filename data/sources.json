@@ -1,0 +1,58 @@
+{
+  "note": "Primary inputs for the BedWatch pitch. GFW fishing-effort tiles need a free API token; the public map does not.",
+  "sources": [
+    {
+      "id": "gfw-map",
+      "role": "demo website — trawl effort",
+      "name": "Global Fishing Watch Map",
+      "url": "https://globalfishingwatch.org/map",
+      "palkUrl": "https://globalfishingwatch.org/map",
+      "how": "Open the map, search Palk Bay / India EEZ, filter Apparent fishing effort → gear type Trawlers. Share the workspace URL for judges. AIS undercounts many small trawlers in South and Southeast Asia.",
+      "license": "View free; API token for tiles/reports"
+    },
+    {
+      "id": "gfw-api",
+      "role": "data API — apparent fishing effort (trawlers)",
+      "name": "GFW 4Wings API",
+      "url": "https://globalfishingwatch.org/our-apis/documentation/docs/v3/4wings",
+      "how": "Dataset public-global-fishing-effort:latest, filter geartype in ('trawlers'). Token at globalfishingwatch.org/our-apis. Use reports for EEZ/custom polygons, not vessel targeting.",
+      "license": "API access token required"
+    },
+    {
+      "id": "unep-seagrass",
+      "role": "data — fishing beds / seagrass",
+      "name": "UNEP-WCMC Global Distribution of Seagrasses v7.1",
+      "url": "https://data.unep-wcmc.org/datasets/7",
+      "doi": "https://doi.org/10.34892/x6r3-d211",
+      "api": "https://data-gis.unep-wcmc.org/server/rest/services/HabitatsAndBiotopes/Global_Distribution_of_Seagrasses/FeatureServer",
+      "how": "Ocean Data Viewer is the official demo. FeatureServer layer 0 = points, layer 1 = polygons. Query GeoJSON with an envelope (Palk Bay 78–81.5E, 8–11N). Coverage in SE Asia is known to be incomplete vs local surveys.",
+      "license": "UNEP-WCMC general data license (not WDPA)"
+    },
+    {
+      "id": "allen",
+      "role": "demo website — 10 m seagrass extent",
+      "name": "Allen Coral Atlas",
+      "url": "https://allencoralatlas.org/atlas/#8.00/9.4500/79.1500",
+      "how": "Benthic maps include seagrass for 2019–2020 and 2023–2024 (Sentinel-2). Best visual demo of meadow extent in Palk Bay / Gulf of Mannar. Download via the Atlas after accepting terms.",
+      "license": "Atlas terms; cite Peng et al. 2026 for global seagrass extent"
+    },
+    {
+      "id": "protected-planet",
+      "role": "data + demo — MPAs",
+      "name": "Protected Planet / WDPA",
+      "url": "https://www.protectedplanet.net/en",
+      "searchUrl": "https://www.protectedplanet.net/en/search-areas?search=Mannar",
+      "api": "https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/WDPA_Marine_and_Coastal/FeatureServer",
+      "how": "Search Mannar Valaiguda (Ramsar). Marine national park names are often missing or differently spelled in the marine WDPA extract — treat MPA coverage as a lower bound.",
+      "license": "WDPA terms via Protected Planet"
+    },
+    {
+      "id": "hiddink",
+      "role": "model parameters — depletion vs penetration",
+      "name": "Hiddink et al. 2017 (PNAS) relative benthic status",
+      "url": "https://www.pnas.org/doi/10.1073/pnas.1618858114",
+      "how": "Supplies the depletion-per-pass and recovery logic used in model.js / model/rbs.py. Not a spatial dataset.",
+      "license": "Paper; parameters used as a screening approximation"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BedWatch Asia — predicted seabed degradation</title>
+    <link rel="stylesheet" href="./vendor/leaflet.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">SDG 14.2 · 14.4 · predictive benthic status</p>
+        <h1>BedWatch Asia</h1>
+      </div>
+      <p class="lede">
+        Forecast how inappropriate trawl procedures (gear, depth, ticklers, repeat tracks,
+        spawn-season tows) degrade fishing beds — then compare reform vs bed-safe closures.
+      </p>
+    </header>
+
+    <main class="layout">
+      <aside class="panel">
+        <section>
+          <h2>Asia snapshot</h2>
+          <div class="stats" id="stats"></div>
+        </section>
+        <section>
+          <h2>Hotspots</h2>
+          <div class="hotspot-list" id="hotspot-list"></div>
+        </section>
+        <section>
+          <h2>Map layers</h2>
+          <label><input type="checkbox" id="layer-unep" checked /> UNEP-WCMC seagrass (real, Palk–Mannar)</label>
+          <label><input type="checkbox" id="layer-seagrass" /> Sketch bed polygons</label>
+          <label><input type="checkbox" id="layer-trawl" checked /> Sketch trawl footprint</label>
+          <label><input type="checkbox" id="layer-mpa" /> Sketch MPA fragments</label>
+          <label><input type="checkbox" id="layer-forecast" checked /> Palk Bay 10-year forecast grid</label>
+        </section>
+        <section>
+          <h2>Data &amp; live demos</h2>
+          <div class="source-list" id="source-list">
+            <a class="source-card" href="https://globalfishingwatch.org/map" target="_blank" rel="noopener">
+              <strong>Global Fishing Watch Map</strong>
+              <span>demo website — trawl effort (filter gear: Trawlers, search Palk Bay / India EEZ)</span>
+            </a>
+            <a class="source-card" href="https://data.unep-wcmc.org/datasets/7" target="_blank" rel="noopener">
+              <strong>UNEP-WCMC Ocean Data Viewer</strong>
+              <span>demo + data — global seagrass polygons (v7.1). Palk–Mannar extract is already on this map</span>
+            </a>
+            <a class="source-card" href="https://allencoralatlas.org/atlas/#8.00/9.4500/79.1500" target="_blank" rel="noopener">
+              <strong>Allen Coral Atlas</strong>
+              <span>demo website — 10 m seagrass extent, zoomed to Palk Bay</span>
+            </a>
+            <a class="source-card" href="https://www.protectedplanet.net/en/search-areas?search=Mannar" target="_blank" rel="noopener">
+              <strong>Protected Planet / WDPA</strong>
+              <span>demo + data — MPA search for Mannar (Ramsar: Mannar Valaiguda)</span>
+            </a>
+          </div>
+        </section>
+      </aside>
+
+      <section class="map-wrap">
+        <div id="map"></div>
+        <div class="map-toolbar" id="scenario-bar">
+          <span>Palk grid colors</span>
+          <button type="button" data-scenario="current" class="active">Current procedures</button>
+          <button type="button" data-scenario="reformed">Reform procedures</button>
+          <button type="button" data-scenario="bedsafe">No tow on seagrass</button>
+        </div>
+        <div class="legend">
+          <span><i class="swatch seagrass"></i> UNEP seagrass</span>
+          <span><i class="swatch trawl"></i> Towed gear</span>
+          <span><i class="swatch mpa"></i> MPA</span>
+          <span><i class="swatch rbs-low"></i> RBS &lt; 0.2 (collapse)</span>
+          <span><i class="swatch rbs-mid"></i> RBS 0.2–0.4</span>
+          <span><i class="swatch rbs-high"></i> RBS &gt; 0.4</span>
+        </div>
+      </section>
+
+      <aside class="panel detail" id="detail"></aside>
+    </main>
+
+    <footer>
+      Screening model, not a stock assessment. Yearly relative benthic status (RBS):
+      status after sweeps = status × (1 − d)^F, then + r × (1 − status). Depletion d
+      follows Hiddink et al. 2017 penetration; seagrass multiplier from Palk Bay / SE Asia
+      meadow studies. Grid is a synthetic 0.1° Palk Bay effort surface for demo.
+    </footer>
+
+    <script src="./vendor/leaflet.js"></script>
+    <script src="./model.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

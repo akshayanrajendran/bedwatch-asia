@@ -1,0 +1,218 @@
+{
+  "type": "FeatureCollection",
+  "name": "bedwatch-illustrative-layers",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "seagrass",
+        "hotspot": "palk-bay",
+        "name": "Palk Bay core meadows",
+        "sensitivity": 0.95
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [79.0, 9.15], [79.55, 9.2], [79.7, 9.55], [79.55, 9.95],
+          [79.15, 10.05], [78.85, 9.7], [78.9, 9.3], [79.0, 9.15]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "trawl",
+        "hotspot": "palk-bay",
+        "name": "High trawl intensity (illustrative)",
+        "intensity": 0.9
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [79.05, 9.25], [79.5, 9.28], [79.62, 9.6], [79.4, 9.85],
+          [79.1, 9.75], [79.0, 9.45], [79.05, 9.25]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "mpa",
+        "hotspot": "palk-bay",
+        "name": "Partial coastal protection",
+        "coverage": "fragmented"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [79.25, 9.15], [79.42, 9.18], [79.45, 9.35], [79.28, 9.38], [79.25, 9.15]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "seagrass",
+        "hotspot": "gulf-mannar",
+        "name": "Gulf of Mannar beds",
+        "sensitivity": 0.85
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [78.2, 8.75], [78.75, 8.8], [79.05, 9.15], [78.7, 9.2], [78.15, 8.95], [78.2, 8.75]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "trawl",
+        "hotspot": "gulf-mannar",
+        "name": "MPA-edge trawl band",
+        "intensity": 0.65
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [78.55, 8.82], [78.95, 8.9], [79.0, 9.12], [78.72, 9.08], [78.55, 8.82]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "mpa",
+        "hotspot": "gulf-mannar",
+        "name": "Gulf of Mannar Marine National Park (approx.)",
+        "coverage": "formal MPA"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [78.25, 8.78], [78.7, 8.82], [78.78, 9.05], [78.35, 9.02], [78.25, 8.78]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "seagrass",
+        "hotspot": "tawi-tawi",
+        "name": "Sulu seagrass mosaic",
+        "sensitivity": 0.88
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [119.55, 4.75], [120.35, 4.85], [120.4, 5.35], [119.7, 5.4], [119.45, 5.05], [119.55, 4.75]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "trawl",
+        "hotspot": "tawi-tawi",
+        "name": "Towed-gear pressure",
+        "intensity": 0.55
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [119.7, 4.9], [120.2, 4.95], [120.25, 5.2], [119.85, 5.22], [119.7, 4.9]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "seagrass",
+        "hotspot": "selayar",
+        "name": "West Selayar meadows",
+        "sensitivity": 0.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [120.38, -6.05], [120.5, -6.06], [120.52, -6.22], [120.39, -6.2], [120.38, -6.05]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "trawl",
+        "hotspot": "selayar",
+        "name": "Samba / push-net zone",
+        "intensity": 0.45
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [120.4, -6.08], [120.49, -6.09], [120.5, -6.18], [120.41, -6.17], [120.4, -6.08]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "seagrass",
+        "hotspot": "java-sea",
+        "name": "North Java remnant beds",
+        "sensitivity": 0.7
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [109.6, -6.35], [111.4, -6.2], [111.6, -5.85], [109.8, -6.0], [109.6, -6.35]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "trawl",
+        "hotspot": "java-sea",
+        "name": "Java Sea trawl footprint",
+        "intensity": 0.88
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [109.4, -6.5], [112.2, -6.3], [112.4, -5.6], [109.6, -5.8], [109.4, -6.5]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "seagrass",
+        "hotspot": "mekong-delta",
+        "name": "Mekong coastal patches",
+        "sensitivity": 0.75
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [105.9, 9.05], [106.7, 9.1], [106.85, 9.7], [106.15, 9.75], [105.85, 9.35], [105.9, 9.05]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "kind": "trawl",
+        "hotspot": "mekong-delta",
+        "name": "Shallow-water trawl / push net",
+        "intensity": 0.78
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [106.0, 9.15], [106.75, 9.2], [106.8, 9.55], [106.2, 9.55], [106.0, 9.15]
+        ]]
+      }
+    }
+  ]
+}

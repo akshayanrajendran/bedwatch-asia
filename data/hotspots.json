@@ -1,0 +1,228 @@
+{
+  "generatedFor": "hackathon demo — illustrative extents and intensities, grounded in published regional patterns",
+  "sdg": ["14.2 Restore marine and coastal ecosystems", "14.4 End destructive fishing", "14.5 Conserve coastal and marine areas"],
+  "hotspots": [
+    {
+      "id": "palk-bay",
+      "name": "Palk Bay",
+      "region": "India – Sri Lanka",
+      "center": [9.45, 79.15],
+      "zoom": 8,
+      "seagrassKm2": 3300,
+      "trawlHoursIndex": 92,
+      "mpaCoveragePct": 18,
+      "bedHealth": 28,
+      "risk": 94,
+      "drivers": [
+        "Bottom trawls uproot continuous seagrass meadows",
+        "Transboundary fishing pressure in shallow nursery grounds",
+        "Turbidity and sedimentation reduce light to beds"
+      ],
+      "actions": [
+        "Seasonal trawl exclusion over mapped seagrass polygons",
+        "Prioritize dugong-core meadows for no-tow buffers",
+        "Pair restoration plugs with enforcement, not planting alone"
+      ],
+      "species": ["dugong", "shrimp nursery", "rabbitfish"],
+      "deepDive": true,
+      "model": {
+        "gear": "otter_heavy",
+        "habitat": "seagrass",
+        "sweeps_per_year": 6.4,
+        "status0": 0.28,
+        "practices": {
+          "tickler_chains": true,
+          "too_shallow_on_bed": true,
+          "repeat_same_tracks": true,
+          "spawn_season_tows": true,
+          "high_tow_speed": false
+        }
+      }
+    },
+    {
+      "id": "gulf-mannar",
+      "name": "Gulf of Mannar",
+      "region": "Tamil Nadu, India",
+      "center": [8.95, 78.55],
+      "zoom": 9,
+      "seagrassKm2": 1100,
+      "trawlHoursIndex": 71,
+      "mpaCoveragePct": 62,
+      "bedHealth": 46,
+      "risk": 68,
+      "drivers": [
+        "Trawl activity along MPA edges (paper-park leakage)",
+        "Anchor and boat scarring in shallow beds",
+        "Nutrient runoff shading meadows"
+      ],
+      "actions": [
+        "Extend no-tow buffers 2 km beyond sanctuary boundaries",
+        "AIS watchlist for repeat edge-trawlers",
+        "Community seagrass photo plots for monthly change"
+      ],
+      "species": ["dugong", "reef fish nursery"],
+      "deepDive": false,
+      "model": {
+        "gear": "otter",
+        "habitat": "seagrass",
+        "sweeps_per_year": 3.1,
+        "status0": 0.46,
+        "practices": {
+          "tickler_chains": false,
+          "too_shallow_on_bed": true,
+          "repeat_same_tracks": true,
+          "spawn_season_tows": false,
+          "high_tow_speed": false
+        }
+      }
+    },
+    {
+      "id": "tawi-tawi",
+      "name": "Tawi-Tawi / Sulu Archipelago",
+      "region": "Southern Philippines",
+      "center": [5.05, 119.95],
+      "zoom": 8,
+      "seagrassKm2": 890,
+      "trawlHoursIndex": 54,
+      "mpaCoveragePct": 9,
+      "bedHealth": 41,
+      "risk": 79,
+      "drivers": [
+        "Destructive fishing and gleaning on remaining meadows",
+        "Very low MPA coverage of seagrass beds",
+        "Coastal development and aquaculture conversion"
+      ],
+      "actions": [
+        "Designate seagrass LMMAs with gear bans (push nets / towed gear)",
+        "Fisher-led bed patrols with photo evidence",
+        "Restore only beds where gear pressure is already reduced"
+      ],
+      "species": ["dugong", "siganids", "sea cucumber"],
+      "deepDive": false,
+      "model": {
+        "gear": "samba_push",
+        "habitat": "seagrass",
+        "sweeps_per_year": 2.4,
+        "status0": 0.41,
+        "practices": {
+          "tickler_chains": false,
+          "too_shallow_on_bed": true,
+          "repeat_same_tracks": false,
+          "spawn_season_tows": true,
+          "high_tow_speed": false
+        }
+      }
+    },
+    {
+      "id": "selayar",
+      "name": "Selayar Island",
+      "region": "South Sulawesi, Indonesia",
+      "center": [-6.12, 120.48],
+      "zoom": 10,
+      "seagrassKm2": 42,
+      "trawlHoursIndex": 38,
+      "mpaCoveragePct": 24,
+      "bedHealth": 39,
+      "risk": 72,
+      "drivers": [
+        "Samba seine and sogoro push-net still used on meadows",
+        "Trampling during gleaning",
+        "Surveillance improved locally but gear use persists"
+      ],
+      "actions": [
+        "Gear swap: samba → static traps outside meadows",
+        "Mark meadow edges with local buoys visible at high tide",
+        "Track bed cover with quarterly shoreline surveys"
+      ],
+      "species": ["parrotfish", "rabbitfish", "green turtle"],
+      "deepDive": false,
+      "model": {
+        "gear": "samba_push",
+        "habitat": "seagrass",
+        "sweeps_per_year": 1.8,
+        "status0": 0.39,
+        "practices": {
+          "tickler_chains": false,
+          "too_shallow_on_bed": true,
+          "repeat_same_tracks": false,
+          "spawn_season_tows": false,
+          "high_tow_speed": false
+        }
+      }
+    },
+    {
+      "id": "java-sea",
+      "name": "North Java / Java Sea",
+      "region": "Indonesia",
+      "center": [-5.9, 110.5],
+      "zoom": 7,
+      "seagrassKm2": 210,
+      "trawlHoursIndex": 88,
+      "mpaCoveragePct": 6,
+      "bedHealth": 22,
+      "risk": 91,
+      "drivers": [
+        "Industrial and small-scale bottom trawl effort on soft sediment",
+        "Nursery grounds flattened; catch composition shifts to low-value fish",
+        "Almost no spatial protection of remaining beds"
+      ],
+      "actions": [
+        "Close known nursery polygons to towed gear year-round",
+        "VMS/AIS requirement for vessels >10 GT in nursery cells",
+        "Sediment-carbon argument: trawling resuspends stored carbon"
+      ],
+      "species": ["shrimp", "demersal fish"],
+      "deepDive": false,
+      "model": {
+        "gear": "otter_heavy",
+        "habitat": "nursery_mud",
+        "sweeps_per_year": 5.8,
+        "status0": 0.22,
+        "practices": {
+          "tickler_chains": true,
+          "too_shallow_on_bed": false,
+          "repeat_same_tracks": true,
+          "spawn_season_tows": true,
+          "high_tow_speed": true
+        }
+      }
+    },
+    {
+      "id": "mekong-delta",
+      "name": "Mekong Delta coast",
+      "region": "Vietnam",
+      "center": [9.4, 106.4],
+      "zoom": 8,
+      "seagrassKm2": 160,
+      "trawlHoursIndex": 76,
+      "mpaCoveragePct": 11,
+      "bedHealth": 33,
+      "risk": 84,
+      "drivers": [
+        "Trawl and push-net fisheries in shallow turbid waters",
+        "Aquaculture expansion converting nearshore beds",
+        "River sediment and nutrient pulses"
+      ],
+      "actions": [
+        "Map remaining beds with Sentinel-2 (dry-season composites)",
+        "No-tow corridors along remaining seagrass patches",
+        "Co-manage with shrimp farmers on effluent timing"
+      ],
+      "species": ["shrimp nursery", "mud crab"],
+      "deepDive": false,
+      "model": {
+        "gear": "otter",
+        "habitat": "seagrass",
+        "sweeps_per_year": 4.2,
+        "status0": 0.33,
+        "practices": {
+          "tickler_chains": false,
+          "too_shallow_on_bed": true,
+          "repeat_same_tracks": true,
+          "spawn_season_tows": true,
+          "high_tow_speed": false
+        }
+      }
+    }
+  ]
+}

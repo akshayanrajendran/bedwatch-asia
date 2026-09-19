@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+pydeck
+xarray
+netCDF4
