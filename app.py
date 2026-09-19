@@ -146,7 +146,10 @@ def load_depth(region_id):
         grid["depth"] = 10 + 160 * (1 - dist / max(float(dist.max()), 0.01))
         if region_id == "palk":
             grid["depth"] = np.clip(grid["depth"], 8, 40)
-    grass = load_seagrass_cells(grid) if region_id == "palk" else (grid["depth"] < 25)
+    if region_id == "palk":
+        grass = load_seagrass_cells(grid)
+    else:
+        grass = (grid["depth"] < 28) & (grid["lon"] < 101.2)
     grid["habitat"] = np.where(grass, "seagrass", np.where(grid["depth"] < 50, "nursery_mud", "mud"))
     return grid
 
