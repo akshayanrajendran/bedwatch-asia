@@ -21,6 +21,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
+from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
@@ -77,6 +78,31 @@ def bbox_geojson():
     }
 
 
+def flatten_entries(payload):
+    """GFW returns entries as [{dataset: [rows...]}] or {dataset: [rows...]} or [rows]."""
+    rows = payload.get("entries") if isinstance(payload, dict) else payload
+    if rows is None:
+        rows = payload.get("data") if isinstance(payload, dict) else payload
+    out = []
+    if isinstance(rows, dict):
+        for v in rows.values():
+            if isinstance(v, list):
+                out.extend(v)
+        return out
+    if isinstance(rows, list):
+        for item in rows:
+            if isinstance(item, dict) and ("lat" in item or "latitude" in item):
+                out.append(item)
+            elif isinstance(item, dict):
+                for v in item.values():
+                    if isinstance(v, list):
+                        out.extend(v)
+                    elif isinstance(v, dict) and ("lat" in v or "latitude" in v):
+                        out.append(v)
+        return out
+    return []
+
+
 def parse_table(raw: bytes):
     if raw[:2] == b"PK":
         with zipfile.ZipFile(io.BytesIO(raw)) as zf:
@@ -86,16 +112,13 @@ def parse_table(raw: bytes):
             raw = zf.read(names[0])
     text = raw.decode("utf-8", errors="replace")
     if text.lstrip().startswith("{") or text.lstrip().startswith("["):
-        payload = json.loads(text)
-        rows = payload.get("entries") or payload.get("data") or payload
-        if isinstance(rows, dict):
-            rows = rows.get("entries") or []
-        return list(rows)
+        return flatten_entries(json.loads(text))
     return list(csv.DictReader(io.StringIO(text)))
 
 
 def to_csv_rows(entries):
-    out = []
+    """Sum vessel hours into date/lat/lon cells for the Streamlit app."""
+    buckets: dict[tuple, float] = defaultdict(float)
     for e in entries:
         lat = e.get("lat", e.get("latitude"))
         lon = e.get("lon", e.get("longitude"))
@@ -106,15 +129,14 @@ def to_csv_rows(entries):
         date_s = str(date)
         if len(date_s) == 4:
             date_s = f"{date_s}-01-01"
-        out.append(
-            {
-                "date": date_s[:10],
-                "lat": float(lat),
-                "lon": float(lon),
-                "fishing_hours": float(hours),
-            }
-        )
-    return out
+        else:
+            date_s = date_s[:10]
+        key = (date_s, round(float(lat), 2), round(float(lon), 2))
+        buckets[key] += float(hours)
+    return [
+        {"date": d, "lat": lat, "lon": lon, "fishing_hours": hrs}
+        for (d, lat, lon), hrs in sorted(buckets.items())
+    ]
 
 
 def fetch_year(token: str, year: int) -> bytes:
@@ -128,7 +150,6 @@ def fetch_year(token: str, year: int) -> bytes:
             "filters[0]": "geartype in ('trawlers')",
             "date-range": date_range,
             "spatial-aggregation": "false",
-            "group-by": "FLAG",
         }
     )
     req = urllib.request.Request(
@@ -166,9 +187,9 @@ def main() -> None:
             print(f"GFW HTTP {exc.code}: {body[:800]}", file=sys.stderr)
             sys.exit(1)
         year_rows = to_csv_rows(parse_table(raw))
-        print(f"  {len(year_rows)} rows", flush=True)
+        print(f"  {len(year_rows)} cells from raw", flush=True)
         all_rows.extend(year_rows)
-        time.sleep(1.5)  # avoid concurrent-report 429
+        time.sleep(2.0)  # avoid concurrent-report 429
     if not all_rows:
         print("GFW returned no trawler cells.", file=sys.stderr)
         sys.exit(1)

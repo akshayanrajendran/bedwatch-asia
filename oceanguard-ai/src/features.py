@@ -57,4 +57,6 @@ def build_features(weekly: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=["fishing_hours_lag_1", "fishing_hours_next_week"]).reset_index(
         drop=True
     )
+    # Early weeks still lack deeper lags; models need finite features
+    df[FEATURE_COLS] = df[FEATURE_COLS].fillna(0.0)
     return df
