@@ -2,7 +2,8 @@
 
 Hackathon product for **SDG 14**: a screening forecast of where inappropriate bottom trawling degrades fishing beds, and whether a closure leaks effort versus reforming gear, depth, and season.
 
-Live app: `streamlit run app.py` (Gulf of Thailand + South China Sea).
+Live app: **[https://bedwatch-asia.streamlit.app](https://bedwatch-asia.streamlit.app)**  
+Local: `streamlit run app.py` (Gulf of Thailand + South China Sea). Sidebar: **Explainer**, **OceanGuard AI**, **Setup & docs**.
 
 ### Global Fishing Watch (Thailand + South China Sea)
 
@@ -89,7 +90,7 @@ Optional data files (drop them here; the app falls back to synthetic data if mis
    - repository: this repo
    - branch: `main`
    - main file path: `app.py`
-3. The live URL looks like `https://<app-name>.streamlit.app`.
+3. The live URL is **[https://bedwatch-asia.streamlit.app](https://bedwatch-asia.streamlit.app)** (redeploys from `main` after each push).
 
 ## Model (short)
 

@@ -50,6 +50,7 @@ def main() -> None:
 | Page | Purpose |
 | --- | --- |
 | **BedWatch Asia** (home) | Seabed / fishing-bed **risk screening** for the **Gulf of Thailand** and **South China Sea**. Scores pressure × habitat vulnerability, tests a closure (with effort leakage) vs gear/procedure reform, and shows a 10-year relative benthic status path. |
+| **Explainer** | Plain-language story: problem, how to read the maps, what the numbers are not. |
 | **OceanGuard AI** | **Next-week fishing-pressure** forecast + LOW/MEDIUM/HIGH risk vs seasonal baseline. Same Streamlit app, separate ML pipeline under `oceanguard-ai/`. |
 | **Setup & docs** (this page) | Run instructions, GFW token setup, data paths, and honest limits. |
 
@@ -142,6 +143,7 @@ OceanGuard predicts **apparent fishing hours next week** vs a seasonal baseline.
         """bedwatch-asia/
   app.py                      # BedWatch home page
   pages/
+    1_Explainer.py            # product explainer
     2_OceanGuard_AI.py        # launches oceanguard-ai/app.py
     3_Setup_and_Docs.py       # this page
   model/fetch_gfw.py          # GFW → data/gfw_trawl_effort.csv

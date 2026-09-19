@@ -150,6 +150,7 @@ def fetch_year(token: str, year: int) -> bytes:
             "filters[0]": "geartype in ('trawlers')",
             "date-range": date_range,
             "spatial-aggregation": "false",
+            "group-by": "FLAG",
         }
     )
     req = urllib.request.Request(
@@ -161,7 +162,7 @@ def fetch_year(token: str, year: int) -> bytes:
             "Content-Type": "application/json",
             "Content-Language": "en-EN",
             "Accept": "application/json",
-            "User-Agent": "bedwatch-asia/1.0 (hackathon)",
+            "User-Agent": "Mozilla/5.0 (compatible; bedwatch-asia/1.0; +https://github.com/)",
         },
     )
     # One concurrent report per token — retry 429 until the prior report clears.
