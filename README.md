@@ -1,6 +1,17 @@
 # BedWatch Asia
 
-Hackathon prototype for **SDG 14**: predict seabed / fishing-bed degradation from inappropriate trawl procedures, using a relative benthic status (RBS) model on Asian waterbodies.
+Hackathon product for **SDG 14**: a screening forecast of where inappropriate bottom trawling degrades fishing beds, and whether a closure leaks effort versus reforming gear, depth, and season.
+
+Live app: `streamlit run app.py` (Gulf of Thailand + Palk Bay).
+
+**What it does**
+1. Maps annual trawl hours onto 0.25 degree cells.
+2. Scores risk = pressure x vulnerability x (1 - recovery), 0-100.
+3. Predicts 10-year relative benthic status (Hiddink-style depletion/recovery).
+4. Tests two actions: a closure box with effort displacement, and a procedure reform (drop ticklers, no tow on seagrass).
+5. Warns if a neighboring cell's risk jumps more than 20 points (leakage).
+
+## Trawl Risk Index (Streamlit)
 
 ## Data sources (use these)
 

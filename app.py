@@ -1,4 +1,4 @@
-"""Trawl Risk Index demo: seabed ecosystem risk from bottom trawling, Gulf of Thailand."""
+"""BedWatch Asia: forecast fishing-bed risk from inappropriate bottom trawling."""
 from pathlib import Path
 
 import numpy as np
@@ -6,30 +6,53 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
-# CONFIG: all weights and lookups are easy to edit.
-# Vulnerability and recovery values are illustrative placeholders.
-CONFIG = {
-    "lat_min": 5.0,
-    "lat_max": 14.0,
-    "lon_min": 99.0,
-    "lon_max": 106.0,
-    "cell": 0.25,
-    "year0": 2018,
-    "year1": 2023,
-    "center_lat": 9.5,
-    "center_lon": 102.5,
-    "vulnerability": {"lt20": 0.5, "20_50": 0.6, "50_100": 0.8, "gt100": 1.0},
-    "recovery": {"lt20": 0.8, "20_50": 0.6, "50_100": 0.4, "gt100": 0.2},
+# CONFIG: edit lookups here. Vulnerability and recovery are illustrative placeholders
+# inspired by Hiddink et al. 2017 (depletion vs penetration, recovery vs longevity).
+CELL = 0.25
+YEAR0, YEAR1 = 2018, 2023
+VULN = {"lt20": 0.5, "20_50": 0.6, "50_100": 0.8, "gt100": 1.0}
+RECOV = {"lt20": 0.8, "20_50": 0.6, "50_100": 0.4, "gt100": 0.2}
+# Procedure multipliers on depletion (d) or sweep rate (f).
+GEAR_D = {"otter": 0.06, "otter_heavy": 0.11, "beam": 0.14, "samba_push": 0.20}
+HABITAT_D = {"mud": 1.0, "sand": 1.15, "seagrass": 3.4, "nursery_mud": 1.4}
+HABITAT_R = {"mud": 0.65, "sand": 0.40, "seagrass": 0.16, "nursery_mud": 0.35}
+REGIONS = {
+    "gulf": {
+        "title": "Gulf of Thailand",
+        "lat_min": 5.0,
+        "lat_max": 14.0,
+        "lon_min": 99.0,
+        "lon_max": 106.0,
+        "center": (9.5, 102.5),
+        "zoom": 5.4,
+        "box": (9.0, 11.0, 100.0, 102.0),
+        "depth_center": (9.0, 102.0),
+        "hotspots": np.array([[8.4, 100.2], [12.0, 100.8], [10.2, 100.4], [6.6, 100.9]]),
+        "default_gear": "otter_heavy",
+    },
+    "palk": {
+        "title": "Palk Bay (India-Sri Lanka)",
+        "lat_min": 8.7,
+        "lat_max": 10.2,
+        "lon_min": 78.8,
+        "lon_max": 80.1,
+        "center": (9.45, 79.25),
+        "zoom": 7.4,
+        "box": (9.3, 9.8, 79.0, 79.5),
+        "depth_center": (9.5, 79.3),
+        "hotspots": np.array([[9.45, 79.25], [9.2, 79.05], [9.7, 79.4], [8.95, 78.9]]),
+        "default_gear": "otter_heavy",
+    },
 }
 ROOT = Path(__file__).resolve().parent
 GFW = ROOT / "data" / "gfw_trawl_effort.csv"
 GEBCO = ROOT / "data" / "gebco.nc"
-CELL = CONFIG["cell"]
+SEAGRASS_PTS = ROOT / "data" / "seagrass_unep_palk_pts.geojson"
 
 
-def cell_centers():
-    lats = np.arange(CONFIG["lat_min"], CONFIG["lat_max"], CELL) + CELL / 2
-    lons = np.arange(CONFIG["lon_min"], CONFIG["lon_max"], CELL) + CELL / 2
+def cell_centers(reg):
+    lats = np.arange(reg["lat_min"], reg["lat_max"], CELL) + CELL / 2
+    lons = np.arange(reg["lon_min"], reg["lon_max"], CELL) + CELL / 2
     yy, xx = np.meshgrid(lats, lons, indexing="ij")
     return pd.DataFrame({"lat": yy.ravel(), "lon": xx.ravel()})
 
@@ -48,26 +71,48 @@ def band_key(depth):
     return "gt100"
 
 
+def load_seagrass_cells(grid):
+    if not SEAGRASS_PTS.exists():
+        return np.zeros(len(grid), dtype=bool)
+    import json
+
+    geo = json.loads(SEAGRASS_PTS.read_text())
+    pts = np.array([f["geometry"]["coordinates"] for f in geo["features"]])
+    if not len(pts):
+        return np.zeros(len(grid), dtype=bool)
+    mask = np.zeros(len(grid), dtype=bool)
+    for i, row in grid.iterrows():
+        d2 = (pts[:, 1] - row["lat"]) ** 2 + (pts[:, 0] - row["lon"]) ** 2
+        mask[i] = d2.min() <= (0.35**2)
+    return mask
+
+
 @st.cache_data
-def load_effort():
-    grid = cell_centers()
+def load_effort(region_id):
+    reg = REGIONS[region_id]
+    grid = cell_centers(reg)
     if GFW.exists():
         raw = pd.read_csv(GFW)
         raw["year"] = pd.to_datetime(raw["date"]).dt.year
-        raw["lat"] = snap(raw["lat"], CONFIG["lat_min"])
-        raw["lon"] = snap(raw["lon"], CONFIG["lon_min"])
-        agg = raw.groupby(["year", "lat", "lon"], as_index=False)["fishing_hours"].sum()
-        return "GFW data", agg
-    rng = np.random.default_rng(42)
-    # Coastal hotspots (west/north gulf), drifting slightly each year.
-    hotspots = np.array([[8.4, 100.2], [12.0, 100.8], [10.2, 100.4], [6.6, 100.9]])
+        raw = raw[
+            (raw["lat"] >= reg["lat_min"])
+            & (raw["lat"] <= reg["lat_max"])
+            & (raw["lon"] >= reg["lon_min"])
+            & (raw["lon"] <= reg["lon_max"])
+        ]
+        if len(raw):
+            raw["lat"] = snap(raw["lat"], reg["lat_min"])
+            raw["lon"] = snap(raw["lon"], reg["lon_min"])
+            agg = raw.groupby(["year", "lat", "lon"], as_index=False)["fishing_hours"].sum()
+            return "GFW data", agg
+    rng = np.random.default_rng(7 if region_id == "palk" else 42)
     rows = []
-    for yi, year in enumerate(range(CONFIG["year0"], CONFIG["year1"] + 1)):
-        hs = hotspots + np.array([0.05 * yi, 0.04 * yi])
+    for yi, year in enumerate(range(YEAR0, YEAR1 + 1)):
+        hs = reg["hotspots"] + np.array([0.04 * yi, 0.03 * yi])
         hours = rng.uniform(0.2, 3.0, len(grid))
         for hlat, hlon in hs:
             dist2 = (grid["lat"] - hlat) ** 2 + (grid["lon"] - hlon) ** 2
-            hours = hours + 90 * np.exp(-dist2 / (2 * 0.45**2))
+            hours = hours + 90 * np.exp(-dist2 / (2 * 0.35**2))
         tmp = grid.copy()
         tmp["year"] = year
         tmp["fishing_hours"] = hours
@@ -76,8 +121,9 @@ def load_effort():
 
 
 @st.cache_data
-def load_depth():
-    grid = cell_centers()
+def load_depth(region_id):
+    reg = REGIONS[region_id]
+    grid = cell_centers(reg)
     if GEBCO.exists():
         import xarray as xr
 
@@ -93,19 +139,48 @@ def load_depth():
             }
         )
         elev = np.asarray(pts)
-        grid["depth"] = np.clip(np.where(elev < 0, -elev, elev), 10, None)
-        return grid
-    # Deeper toward gulf center (~9N, 102E), roughly 10-200 m.
-    dist = np.sqrt((grid["lat"] - 9.0) ** 2 + (grid["lon"] - 102.0) ** 2)
-    grid["depth"] = 10 + 190 * (1 - dist / dist.max())
+        grid["depth"] = np.clip(np.where(elev < 0, -elev, elev), 8, None)
+    else:
+        cy, cx = reg["depth_center"]
+        dist = np.sqrt((grid["lat"] - cy) ** 2 + (grid["lon"] - cx) ** 2)
+        grid["depth"] = 10 + 160 * (1 - dist / max(float(dist.max()), 0.01))
+        if region_id == "palk":
+            grid["depth"] = np.clip(grid["depth"], 8, 40)
+    grass = load_seagrass_cells(grid) if region_id == "palk" else (grid["depth"] < 25)
+    grid["habitat"] = np.where(grass, "seagrass", np.where(grid["depth"] < 50, "nursery_mud", "mud"))
     return grid
 
 
 def with_lookups(df):
     keys = df["depth"].map(band_key)
     out = df.copy()
-    out["vulnerability"] = keys.map(CONFIG["vulnerability"])
-    out["recovery"] = keys.map(CONFIG["recovery"])
+    out["vulnerability"] = keys.map(VULN)
+    out["recovery"] = keys.map(RECOV)
+    seag = out["habitat"] == "seagrass"
+    out.loc[seag, "vulnerability"] = 0.95
+    out.loc[seag, "recovery"] = 0.20
+    return out
+
+
+def procedure_factor(practices, habitat):
+    d = GEAR_D["otter_heavy"] * HABITAT_D.get(habitat, 1.0)
+    if practices.get("tickler_chains"):
+        d *= 1.55
+    if practices.get("high_tow_speed"):
+        d *= 1.12
+    if practices.get("too_shallow_on_bed") and habitat == "seagrass":
+        d *= 1.28
+    f = 1.45 if practices.get("repeat_same_tracks") else 1.0
+    spawn = 0.62 if practices.get("spawn_season_tows") else 1.0
+    return float(np.clip(d * f / spawn, 0.05, 4.0))
+
+
+def apply_practices(df, practices, no_tow_seagrass=False):
+    out = df.copy()
+    fac = out["habitat"].map(lambda h: procedure_factor(practices, h))
+    out["fishing_hours"] = out["fishing_hours"] * fac
+    if no_tow_seagrass:
+        out.loc[out["habitat"] == "seagrass", "fishing_hours"] = 0.0
     return out
 
 
@@ -155,30 +230,68 @@ def close_and_displace(df, box, disp_pct):
     return out, neigh
 
 
-def deck_map(df):
+def rbs_path(status0, f, d, r, years=10):
+    s = float(np.clip(status0, 0, 1))
+    out = [s]
+    for _ in range(years):
+        s = s * ((1.0 - d) ** f)
+        s = s + r * (1.0 - s)
+        s = float(np.clip(s, 0, 1))
+        out.append(s)
+    return out
+
+
+def mean_rbs_inputs(df, practices):
+    hours = float(df["fishing_hours"].mean())
+    hab = df["habitat"].mode().iloc[0] if len(df) else "mud"
+    d = GEAR_D["otter_heavy"] * HABITAT_D.get(hab, 1.0)
+    if practices.get("tickler_chains"):
+        d *= 1.55
+    if practices.get("too_shallow_on_bed") and hab == "seagrass":
+        d *= 1.28
+    d = float(np.clip(d, 0.01, 0.92))
+    f = max(0.0, hours / 25.0)
+    if practices.get("repeat_same_tracks"):
+        f *= 1.45
+    r = HABITAT_R.get(hab, 0.4)
+    status0 = float(np.clip(1.0 - df["risk"].mean() / 100.0, 0.05, 0.95))
+    return status0, f, d, r
+
+
+def deck_map(df, reg, radius=48):
     view = pdk.ViewState(
-        latitude=CONFIG["center_lat"], longitude=CONFIG["center_lon"], zoom=5.4, pitch=0
+        latitude=reg["center"][0], longitude=reg["center"][1], zoom=reg["zoom"], pitch=0
     )
-    layer = pdk.Layer(
+    heat = pdk.Layer(
         "HeatmapLayer",
         data=df,
         get_position=["lon", "lat"],
         get_weight="risk",
-        radiusPixels=48,
+        radiusPixels=radius,
+    )
+    grass = df[df["habitat"] == "seagrass"] if "habitat" in df.columns else df.iloc[0:0]
+    dots = pdk.Layer(
+        "ScatterplotLayer",
+        data=grass,
+        get_position=["lon", "lat"],
+        get_radius=3500,
+        get_fill_color=[45, 140, 90, 90],
+        pickable=True,
     )
     return pdk.Deck(
-        layers=[layer],
+        layers=[heat, dots],
         initial_view_state=view,
         map_style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+        tooltip={"text": "risk {risk}"},
     )
 
 
 @st.cache_data
-def build_panel():
-    label, effort = load_effort()
-    depth = load_depth()
+def build_panel(region_id):
+    label, effort = load_effort(region_id)
+    depth = load_depth(region_id)
     frames = []
-    for year in range(CONFIG["year0"], CONFIG["year1"] + 1):
+    for year in range(YEAR0, YEAR1 + 1):
         g = depth.copy()
         g["year"] = year
         frames.append(g)
@@ -194,45 +307,131 @@ def build_panel():
 
 
 def main():
-    st.set_page_config(page_title="Trawl Risk Index", layout="wide")
-    st.title("Trawl Risk Index")
-    st.caption("Seabed ecosystem risk from bottom trawling in the Gulf of Thailand.")
-    label, all_df, hmin, hmax, rmax = build_panel()
-    year = st.sidebar.slider("Year", CONFIG["year0"], CONFIG["year1"], CONFIG["year1"])
+    st.set_page_config(page_title="BedWatch Asia", layout="wide")
+    st.title("BedWatch Asia")
+    st.caption(
+        "SDG 14 screening tool: where inappropriate bottom trawling degrades fishing beds, "
+        "and whether a closure or a gear reform actually lowers risk after boats move."
+    )
+    region_id = st.sidebar.selectbox(
+        "Waterbody",
+        list(REGIONS.keys()),
+        format_func=lambda k: REGIONS[k]["title"],
+    )
+    reg = REGIONS[region_id]
+    label, all_df, hmin, hmax, rmax = build_panel(region_id)
+    year = st.sidebar.slider("Year", YEAR0, YEAR1, YEAR1)
     st.sidebar.markdown(f"**{label}**")
-    st.sidebar.subheader("Closure scenario")
-    min_lat = st.sidebar.number_input("min lat", CONFIG["lat_min"], CONFIG["lat_max"], 9.0, 0.25)
-    max_lat = st.sidebar.number_input("max lat", CONFIG["lat_min"], CONFIG["lat_max"], 11.0, 0.25)
-    min_lon = st.sidebar.number_input("min lon", CONFIG["lon_min"], CONFIG["lon_max"], 100.0, 0.25)
-    max_lon = st.sidebar.number_input("max lon", CONFIG["lon_min"], CONFIG["lon_max"], 102.0, 0.25)
+    st.sidebar.subheader("Inappropriate procedures (current)")
+    practices = {
+        "tickler_chains": st.sidebar.checkbox("Tickler chains / extra groundgear", True),
+        "too_shallow_on_bed": st.sidebar.checkbox("Tow too shallow on the bed", True),
+        "repeat_same_tracks": st.sidebar.checkbox("Repeat the same tracks", True),
+        "spawn_season_tows": st.sidebar.checkbox("Tow in spawn / nursery season", True),
+        "high_tow_speed": st.sidebar.checkbox("High tow speed", False),
+    }
+    no_tow = st.sidebar.checkbox("Reform: no towed gear on seagrass cells", True)
+    st.sidebar.subheader("Closure box")
+    db = reg["box"]
+    min_lat = st.sidebar.number_input("min lat", reg["lat_min"], reg["lat_max"], db[0], CELL)
+    max_lat = st.sidebar.number_input("max lat", reg["lat_min"], reg["lat_max"], db[1], CELL)
+    min_lon = st.sidebar.number_input("min lon", reg["lon_min"], reg["lon_max"], db[2], CELL)
+    max_lon = st.sidebar.number_input("max lon", reg["lon_min"], reg["lon_max"], db[3], CELL)
     disp = st.sidebar.slider("displacement %", 0, 100, 60)
     box = (min_lat, max_lat, min_lon, max_lon)
-    yr = all_df[all_df["year"] == year].copy()
-    st.subheader(f"Risk map ({year})")
-    st.pydeck_chart(deck_map(yr), use_container_width=True)
-    top = yr.nlargest(10, "risk")[["lat", "lon", "risk", "driver"]]
-    st.subheader("Top 10 hotspots")
-    st.dataframe(top, use_container_width=True, hide_index=True)
-    closed, neigh = close_and_displace(yr, box, disp)
-    scen, _ = score(closed, hmin, hmax, rmax)
-    before = float(yr["risk"].sum())
-    after = float(scen["risk"].sum())
-    pct = 0.0 if before == 0 else 100.0 * (after - before) / before
+
+    base_hours = all_df[all_df["year"] == year].copy()
+    current = apply_practices(base_hours, practices, no_tow_seagrass=False)
+    current, _ = score(current, hmin, hmax, rmax)
+    reformed_p = {
+        "tickler_chains": False,
+        "too_shallow_on_bed": False,
+        "repeat_same_tracks": False,
+        "spawn_season_tows": False,
+        "high_tow_speed": False,
+    }
+    reform = apply_practices(base_hours, reformed_p, no_tow_seagrass=no_tow)
+    reform, _ = score(reform, hmin, hmax, rmax)
+    closed, neigh = close_and_displace(current, box, disp)
+    closed, _ = score(closed, hmin, hmax, rmax)
+
+    before = float(current["risk"].sum())
+    after_c = float(closed["risk"].sum())
+    after_r = float(reform["risk"].sum())
+    pct_c = 0.0 if before == 0 else 100.0 * (after_c - before) / before
+    pct_r = 0.0 if before == 0 else 100.0 * (after_r - before) / before
+
+    a, b, c, d = st.columns(4)
+    a.metric("Cells", f"{len(current):,}")
+    b.metric("Seagrass cells", int((current["habitat"] == "seagrass").sum()))
+    c.metric("Mean risk now", f"{current['risk'].mean():.1f}")
+    d.metric("Chronic share", f"{(current['risk'] >= 60).mean() * 100:.0f}%")
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total risk now", f"{before:.0f}")
+    m2.metric("After closure", f"{after_c:.0f}", f"{pct_c:.1f}%")
+    m3.metric("After procedure reform", f"{after_r:.0f}", f"{pct_r:.1f}%")
+
+    if len(neigh) and neigh.any():
+        delta = closed.loc[neigh, "risk"].to_numpy() - current.loc[neigh, "risk"].to_numpy()
+        if len(delta) and np.nanmax(delta) > 20:
+            st.warning(
+                "Leakage: a cell next to the closure box gained more than 20 risk points. "
+                "Boats moved. Pair the box with a buffer or a gear rule."
+            )
+
     c1, c2, c3 = st.columns(3)
-    c1.metric("Total risk before", f"{before:.1f}")
-    c2.metric("Total risk after", f"{after:.1f}")
-    c3.metric("% change", f"{pct:.1f}%")
-    delta = scen.loc[neigh, "risk"].to_numpy() - yr.loc[neigh, "risk"].to_numpy()
-    if len(delta) and np.nanmax(delta) > 20:
-        st.warning("A neighboring cell's risk increased by more than 20 points.")
-    st.subheader("Scenario map")
-    st.pydeck_chart(deck_map(scen), use_container_width=True)
+    with c1:
+        st.subheader(f"Now ({year})")
+        st.pydeck_chart(deck_map(current, reg), use_container_width=True)
+    with c2:
+        st.subheader("Closure + displacement")
+        st.pydeck_chart(deck_map(closed, reg), use_container_width=True)
+    with c3:
+        st.subheader("Reform procedures")
+        st.pydeck_chart(deck_map(reform, reg), use_container_width=True)
+
+    st.subheader("10-year relative benthic status (mean cell)")
+    s0, f, dmg, rec = mean_rbs_inputs(current, practices)
+    s0r, fr, dr, recr = mean_rbs_inputs(reform, reformed_p)
+    s0c, fc, dc, recc = mean_rbs_inputs(closed, practices)
+    chart = pd.DataFrame(
+        {
+            "year": list(range(0, 11)),
+            "current": rbs_path(s0, f, dmg, rec),
+            "closure": rbs_path(s0c, fc, dc, recc),
+            "reform": rbs_path(s0r, fr, dr, recr),
+        }
+    ).set_index("year")
+    st.line_chart(chart)
+    st.caption(
+        "RBS starts from today's mean risk, then steps yearly: "
+        "status = status * (1-d)^F + r * (1-status). Collapse threshold is 0.2."
+    )
+
+    st.subheader("Top 10 hotspots (current)")
+    top = current.nlargest(10, "risk")[["lat", "lon", "risk", "driver", "habitat", "depth"]]
+    st.dataframe(top, use_container_width=True, hide_index=True)
+
+    with st.expander("What this is"):
+        st.markdown(
+            """
+- **Vision:** fishing beds (seagrass, nurseries, benthos) in Asian waterbodies are scraped by
+  inappropriate trawl procedures. Managers draw MPA lines. This tool scores the *bed* and tests
+  whether a closure leaks effort next door, versus fixing gear, depth, and season.
+- **Index:** pressure (hours, min-max over all years) x vulnerability x (1 - recovery), scaled 0-100.
+- **Prediction:** 10-year RBS uses Hiddink-style depletion and recovery. Seagrass depletion is
+  much higher than mud fauna (uprooting).
+- **Palk Bay** marks UNEP-WCMC seagrass points as habitat cells when the file is present.
+- Drop `data/gfw_trawl_effort.csv` and `data/gebco.nc` to replace synthetic effort and depth.
+            """
+        )
     with st.expander("Limitations"):
         st.markdown(
             "- AIS gaps mean dark-fleet effort is undercounted, so true pressure is likely higher\n"
-            "- habitat map is a depth proxy, not observed substrate\n"
-            "- recovery values are illustrative\n"
-            "- this is a screening index, not a collapse forecast"
+            "- habitat is a depth proxy plus UNEP points, not a full substrate map\n"
+            "- recovery and vulnerability values are illustrative placeholders\n"
+            "- this is a screening forecast, not a stock assessment or collapse proof"
         )
 
 
