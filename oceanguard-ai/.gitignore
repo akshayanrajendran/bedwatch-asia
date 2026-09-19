@@ -1,0 +1,31 @@
+# OceanGuard AI
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.DS_Store
+.env
+.streamlit/secrets.toml
+
+# Large raw GFW downloads
+data/raw/**
+!data/raw/README.md
+!data/raw/.gitkeep
+!data/raw/demo_gfw_effort.csv
+
+data/processed/**
+!data/processed/.gitkeep
+
+data/predictions/**
+!data/predictions/.gitkeep
+
+models/**
+!models/.gitkeep
+
+outputs/figures/**
+!outputs/figures/.gitkeep
+!outputs/model_comparison.csv
+
+*.joblib
+*.pkl
+.ipynb_checkpoints/

@@ -2,7 +2,28 @@
 
 Hackathon product for **SDG 14**: a screening forecast of where inappropriate bottom trawling degrades fishing beds, and whether a closure leaks effort versus reforming gear, depth, and season.
 
-Live app: `streamlit run app.py` (Gulf of Thailand + Palk Bay).
+Live app: `streamlit run app.py` (Gulf of Thailand + South China Sea).
+
+### Global Fishing Watch (Thailand + South China Sea)
+
+1. Open [GFW APIs](https://globalfishingwatch.org/our-apis/) → **Register** → **Request an API key**.
+2. Copy the key into a local `.env` only (never commit it; never paste it into chat):
+
+```bash
+cp .env.example .env
+# edit .env and set either:
+#   GFW_API_KEY=paste_here
+#   GFW_API_TOKEN=paste_here   # alias — same value
+```
+
+3. Fetch trawler hours into the CSV the risk model already reads:
+
+```bash
+python3 model/fetch_gfw.py
+streamlit run app.py
+```
+
+Or without `.env`: `export GFW_API_TOKEN=your_token` then run the same fetch. The script POSTs a 4Wings report for bbox **lat 2–23, lon 99–121**, filter `geartype in ('trawlers')`, years 2018–2023. The sidebar badge switches from **Synthetic data** to **GFW data**. AIS still undercounts small Thai and Vietnamese boats.
 
 **What it does**
 1. Maps annual trawl hours onto 0.25 degree cells.

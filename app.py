@@ -17,7 +17,7 @@ GEAR_D = {"otter": 0.06, "otter_heavy": 0.11, "beam": 0.14, "samba_push": 0.20}
 HABITAT_D = {"mud": 1.0, "sand": 1.15, "seagrass": 3.4, "nursery_mud": 1.4}
 HABITAT_R = {"mud": 0.65, "sand": 0.40, "seagrass": 0.16, "nursery_mud": 0.35}
 REGIONS = {
-    "gulf": {
+    "thailand": {
         "title": "Gulf of Thailand",
         "lat_min": 5.0,
         "lat_max": 14.0,
@@ -27,20 +27,33 @@ REGIONS = {
         "zoom": 5.4,
         "box": (9.0, 11.0, 100.0, 102.0),
         "depth_center": (9.0, 102.0),
-        "hotspots": np.array([[8.4, 100.2], [12.0, 100.8], [10.2, 100.4], [6.6, 100.9]]),
+        "hotspots": np.array([[8.4, 100.2], [12.0, 100.8], [10.2, 100.4], [6.6, 100.9], [13.2, 100.6]]),
         "default_gear": "otter_heavy",
     },
-    "palk": {
-        "title": "Palk Bay (India-Sri Lanka)",
-        "lat_min": 8.7,
-        "lat_max": 10.2,
-        "lon_min": 78.8,
-        "lon_max": 80.1,
-        "center": (9.45, 79.25),
-        "zoom": 7.4,
-        "box": (9.3, 9.8, 79.0, 79.5),
-        "depth_center": (9.5, 79.3),
-        "hotspots": np.array([[9.45, 79.25], [9.2, 79.05], [9.7, 79.4], [8.95, 78.9]]),
+    "scs": {
+        "title": "South China Sea (incl. Thai waters)",
+        "lat_min": 2.0,
+        "lat_max": 23.0,
+        "lon_min": 99.0,
+        "lon_max": 121.0,
+        "center": (12.0, 110.5),
+        "zoom": 4.2,
+        "box": (9.0, 11.0, 100.0, 102.0),
+        "depth_center": (12.0, 113.0),
+        "hotspots": np.array(
+            [
+                [8.4, 100.2],
+                [12.0, 100.8],
+                [10.2, 100.4],
+                [9.5, 106.4],
+                [16.0, 108.4],
+                [20.6, 107.3],
+                [4.2, 108.2],
+                [10.5, 114.0],
+                [10.8, 118.8],
+                [15.4, 119.6],
+            ]
+        ),
         "default_gear": "otter_heavy",
     },
 }
@@ -105,7 +118,7 @@ def load_effort(region_id):
             raw["lon"] = snap(raw["lon"], reg["lon_min"])
             agg = raw.groupby(["year", "lat", "lon"], as_index=False)["fishing_hours"].sum()
             return "GFW data", agg
-    rng = np.random.default_rng(7 if region_id == "palk" else 42)
+    rng = np.random.default_rng(42 if region_id == "thailand" else 11)
     rows = []
     for yi, year in enumerate(range(YEAR0, YEAR1 + 1)):
         hs = reg["hotspots"] + np.array([0.04 * yi, 0.03 * yi])
@@ -144,12 +157,14 @@ def load_depth(region_id):
         cy, cx = reg["depth_center"]
         dist = np.sqrt((grid["lat"] - cy) ** 2 + (grid["lon"] - cx) ** 2)
         grid["depth"] = 10 + 160 * (1 - dist / max(float(dist.max()), 0.01))
-        if region_id == "palk":
-            grid["depth"] = np.clip(grid["depth"], 8, 40)
-    if region_id == "palk":
-        grass = load_seagrass_cells(grid)
+        if region_id == "thailand":
+            grid["depth"] = np.clip(grid["depth"], 8, 80)
+    if region_id == "thailand":
+        grass = (grid["depth"] < 50) & (grid["lon"] < 102.5)
     else:
-        grass = (grid["depth"] < 28) & (grid["lon"] < 101.2)
+        thai_viet_shelf = grid["lon"] < 108.5
+        palawan = (grid["lon"] > 116.5) & (grid["lat"] > 7) & (grid["lat"] < 13)
+        grass = (thai_viet_shelf | palawan) & (grid["depth"] < 90)
     grid["habitat"] = np.where(grass, "seagrass", np.where(grid["depth"] < 50, "nursery_mud", "mud"))
     return grid
 
@@ -313,8 +328,9 @@ def main():
     st.set_page_config(page_title="BedWatch Asia", layout="wide")
     st.title("BedWatch Asia")
     st.caption(
-        "SDG 14 screening tool: where inappropriate bottom trawling degrades fishing beds, "
-        "and whether a closure or a gear reform actually lowers risk after boats move."
+        "SDG 14 screening tool for Thailand and the South China Sea: where inappropriate "
+        "bottom trawling degrades fishing beds, and whether a closure or a gear reform "
+        "actually lowers risk after boats move. Optional GFW trawler hours via GFW_API_TOKEN."
     )
     region_id = st.sidebar.selectbox(
         "Waterbody",
@@ -425,8 +441,9 @@ def main():
 - **Index:** pressure (hours, min-max over all years) x vulnerability x (1 - recovery), scaled 0-100.
 - **Prediction:** 10-year RBS uses Hiddink-style depletion and recovery. Seagrass depletion is
   much higher than mud fauna (uprooting).
-- **Palk Bay** marks UNEP-WCMC seagrass points as habitat cells when the file is present.
-- Drop `data/gfw_trawl_effort.csv` and `data/gebco.nc` to replace synthetic effort and depth.
+- Focus waterbodies: Gulf of Thailand and the South China Sea (including Thai waters).
+- Drop `data/gfw_trawl_effort.csv` from `python3 model/fetch_gfw.py` (needs `GFW_API_TOKEN`)
+  and optional `data/gebco.nc` to replace synthetic effort and depth.
             """
         )
     with st.expander("Limitations"):
